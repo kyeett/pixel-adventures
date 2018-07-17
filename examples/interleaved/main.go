@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"math"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -17,10 +18,11 @@ const (
 	height         = 500.0
 	width          = 500.0
 	gridSize       = 40
-	nLines         = 4
-	tailLength     = 16
-	lineWidth      = 10
-	tickSize       = 500000
+	nLines         = 5
+	tailLength     = 5 * nLines
+	lineWidth      = 20
+	lineWidthDelay = 0.5 * 8 * nLines
+	tickSize       = 60
 	stepSize       = 0.5
 	drawGrid       = false
 	drawLineBorder = false
@@ -33,7 +35,7 @@ var (
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Bounds: pixel.R(0, 0, height, width),
-		VSync:  true,
+		//VSync:  true,
 	}
 
 	win, err := pixelgl.NewWindow(cfg)
@@ -43,7 +45,7 @@ func run() {
 	win.SetPos(pixel.V(100, 100))
 
 	linesOffset := cfg.Bounds.Center().Add(
-		pixel.V(-gridSize*(nLines-0.5), -gridSize*(nLines-0.5))) // -gridSize*nLines/2))
+		pixel.V(-gridSize*(nLines-0.5), -gridSize*(nLines-0.5)))
 	centerOffset := cfg.Bounds.Center()
 
 	p := drawPicture()
@@ -71,6 +73,14 @@ var lines []*line
 
 func createLine(nLines, i float64) *line {
 	colorPalete := []color.Color{
+		colornames.Darkslateblue,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
 		colornames.Darkorchid,
 		colornames.Darkkhaki,
 		colornames.Darkcyan,
@@ -132,6 +142,38 @@ func (l *line) calcLayers() {
 	l.topLayer = tl
 }
 
+// Calculate this on line creation
+func (l *line) indexIsVisible(i int) bool {
+	for c := 0; c < tailLength; c++ {
+		if i == wrapIndex(l.head-c, len(l.vs)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (l *line) indexLineWidth(i int) float64 {
+
+	lw := float64(lineWidth)
+
+	for c := 0; c < tailLength; c++ {
+		if i == wrapIndex(l.head-c, len(l.vs)) {
+			return lw
+		}
+
+		if c > lineWidthDelay && lw > 0 {
+			lw -= 2
+		}
+
+		if lw < 0 {
+			lw = 0
+		}
+	}
+
+	return 0
+}
+
 // TODO: CLEAN UP CODE!
 func newZMask(nLines, i float64) []byte {
 	nSquares := 4 * int(nLines-1)
@@ -189,8 +231,7 @@ func drawLines(offset pixel.Vec) *imdraw.IMDraw {
 	center := pixel.V(width/2, height/2)
 	imd := imdraw.New(nil)
 	imd.EndShape = imdraw.RoundEndShape
-	imd.SetMatrix(pixel.IM.Moved(offset).ScaledXY(center, pixel.V(1, -1))) //.Rotated(center, math.Pi/4))
-
+	imd.SetMatrix(pixel.IM.Moved(offset).ScaledXY(center, pixel.V(1, -1)).Rotated(center, math.Pi/4))
 	/*var visibleLines []pixel.Vec
 	for c := 0; c < tailLength; c++ {
 		wrappedIndex := wrapIndex(l.head-c, len(l.vs))
@@ -208,24 +249,45 @@ func drawLines(offset pixel.Vec) *imdraw.IMDraw {
 	for _, l := range lines {
 		imd.Color = l.color
 		for _, v := range l.bottomLayer {
-			imd.Push(l.vs[v[0]].Scaled(gridSize), l.vs[v[1]].Scaled(gridSize))
-			imd.Line(lineWidth)
+
+			if l.indexIsVisible(v[0]) {
+				imd.Push(l.vs[v[0]].Scaled(gridSize), l.vs[v[1]].Scaled(gridSize))
+				imd.Line(l.indexLineWidth(v[0]))
+			}
 		}
 	}
+
+	// Top layer and head
 	for _, l := range lines {
-		imd.Color = l.color
-		for _, v := range l.topLayer {
-			imd.Push(l.vs[v[0]].Scaled(gridSize), l.vs[v[1]].Scaled(gridSize))
-			imd.Line(lineWidth)
+
+		// Top lines
+		if drawLineBorder {
+			imd.Color = backgroundColor
+			for _, v := range l.topLayer {
+				imd.Push(l.vs[v[0]].Scaled(gridSize), l.vs[v[1]].Scaled(gridSize))
+				imd.Line(2.2 * lineWidth)
+			}
 		}
-	}
-	/*
-		imd.Push(l.vs[l.head].Scaled(gridSize))
-		imd.Color = colornames.Peachpuff
-		imd.Circle(10, 10)
+
+		imd.Color = l.color
+		// Top lines
+		for _, v := range l.topLayer {
+
+			if l.indexIsVisible(v[0]) {
+				imd.Push(l.vs[v[0]].Scaled(gridSize), l.vs[v[1]].Scaled(gridSize))
+				imd.Line(l.indexLineWidth(v[0]))
+			}
+		}
+
+		// Line head
+		/*imd.Push(l.vs[l.head].Scaled(gridSize))
+		imd.Circle(10, 10)*/
 
 		l.head = (l.head + 1) % (len(l.vs) - 1)
-	}*/
+	}
+
+	/*
+		}*/
 
 	return imd
 }
