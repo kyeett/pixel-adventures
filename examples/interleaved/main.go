@@ -18,18 +18,20 @@ const (
 	height         = 500.0
 	width          = 500.0
 	gridSize       = 40
-	nLines         = 5
+	nLines         = 6
 	tailLength     = 5 * nLines
-	lineWidth      = 20
+	lineWidth      = 12
 	lineWidthDelay = 0.5 * 8 * nLines
-	tickSize       = 60
+	tickSize       = 5
 	stepSize       = 0.5
 	drawGrid       = false
 	drawLineBorder = false
+	rotateView     = true
 )
 
 var (
 	backgroundColor = color.Black
+	slownessSlice   = []float64{8, 6, 4, 6, 8, 12}
 )
 
 func run() {
@@ -52,8 +54,9 @@ func run() {
 	s := pixel.NewSprite(p, p.Bounds())
 
 	tick := time.Tick(tickSize * time.Millisecond)
+	var imd *imdraw.IMDraw
 	for !win.Closed() {
-		imd := drawLines(linesOffset)
+		imd = drawLines(linesOffset)
 		win.Clear(backgroundColor)
 
 		if drawGrid {
@@ -61,7 +64,6 @@ func run() {
 		}
 
 		imd.Draw(win)
-		//centerPoint(centerOffset).Draw(win)
 
 		win.Update()
 
@@ -78,10 +80,10 @@ func createLine(nLines, i float64) *line {
 		colornames.Darkgoldenrod,
 		colornames.Darkgoldenrod,
 		colornames.Darkgoldenrod,
-		colornames.Darkgoldenrod,
-		colornames.Darkgoldenrod,
-		colornames.Darkgoldenrod,
 		colornames.Darkorchid,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
+		colornames.Darkgoldenrod,
 		colornames.Darkkhaki,
 		colornames.Darkcyan,
 		colornames.Darkgoldenrod,
@@ -117,9 +119,10 @@ func createLine(nLines, i float64) *line {
 	}
 
 	l := line{
-		color: colorPalete[int(i)],
-		vs:    vs,
-		zMask: newZMask(nLines, i),
+		color:    colorPalete[int(i)],
+		vs:       vs,
+		zMask:    newZMask(nLines, i),
+		slowness: slownessSlice[int(i)],
 	}
 	l.calcLayers()
 
@@ -231,20 +234,12 @@ func drawLines(offset pixel.Vec) *imdraw.IMDraw {
 	center := pixel.V(width/2, height/2)
 	imd := imdraw.New(nil)
 	imd.EndShape = imdraw.RoundEndShape
-	imd.SetMatrix(pixel.IM.Moved(offset).ScaledXY(center, pixel.V(1, -1)).Rotated(center, math.Pi/4))
-	/*var visibleLines []pixel.Vec
-	for c := 0; c < tailLength; c++ {
-		wrappedIndex := wrapIndex(l.head-c, len(l.vs))
-		l.vs[l.zMask[0]]
-		visibleLines = append(visibleLines, l.vs[wrappedIndex].Scaled(gridSize))
-		}*/
-	//imd.Push(visibleLines...)
 
-	/*		if drawLineBorder {
-			imd.Color = color.White
-			//	imd.Push(visibleLines...)
-			imd.Line(2 * lineWidth)
-		}*/
+	if rotateView {
+		imd.SetMatrix(pixel.IM.Moved(offset).ScaledXY(center, pixel.V(1, -1)).Rotated(center, math.Pi/4))
+	} else {
+		imd.SetMatrix(pixel.IM.Moved(offset).ScaledXY(center, pixel.V(1, -1)))
+	}
 
 	for _, l := range lines {
 		imd.Color = l.color
@@ -279,15 +274,12 @@ func drawLines(offset pixel.Vec) *imdraw.IMDraw {
 			}
 		}
 
-		// Line head
-		/*imd.Push(l.vs[l.head].Scaled(gridSize))
-		imd.Circle(10, 10)*/
-
-		l.head = (l.head + 1) % (len(l.vs) - 1)
+		if l.count <= 0 {
+			l.head = (l.head + 1) % (len(l.vs))
+			l.count = l.slowness
+		}
+		l.count--
 	}
-
-	/*
-		}*/
 
 	return imd
 }
@@ -331,6 +323,8 @@ type line struct {
 	vs          []pixel.Vec
 	zMask       []byte
 	color       color.Color
+	slowness    float64
+	count       float64
 	head        int
 	bottomLayer [][]int
 	topLayer    [][]int

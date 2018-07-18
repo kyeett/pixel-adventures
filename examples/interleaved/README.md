@@ -5,8 +5,11 @@ Inspired by the wonderful [Knot](https://beesandbombs.tumblr.com/image/173330685
 ## Todo
 
 * Control palette using keys
-* Vary speed of lines
+* Rotation using key
 * Restructure code (everything...)
+
+### Done
+* ~~Vary speed of lines~~
 
 ## Good settings
 
