@@ -34,17 +34,17 @@ func TestLinePixels(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		l := createLine(tc.nLines, tc.index)
+		l := newLine(tc.nLines, tc.index)
 
-		// Verify # vertices
-		if len(l.vs) != len(tc.expected) {
-			t.Fatalf("got len(l.vs)=%v, expected %v", len(l.vs), len(tc.expected))
+		// Verify # points
+		if len(l.points) != len(tc.expected) {
+			t.Fatalf("got len(l.points)=%v, expected %v", len(l.points), len(tc.expected))
 		}
 
-		// Verify vertices
-		for i := range l.vs {
-			if l.vs[i] != tc.expected[i] {
-				t.Errorf("got %v, want %v", l.vs[i], tc.expected[i])
+		// Verify points
+		for i := range l.points {
+			if l.points[i] != tc.expected[i] {
+				t.Errorf("got %v, want %v", l.points[i], tc.expected[i])
 			}
 		}
 	}
@@ -65,14 +65,14 @@ func TestZMask(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			l := createLine(tc.nLines, tc.index)
+			l := newLine(tc.nLines, tc.index)
 
-			// Verify # vertices
+			// Verify # points
 			if len(l.zMask) != len(tc.expected) {
-				t.Errorf("got len(l.vs)=%v, expected %v", len(l.zMask), len(tc.expected))
+				t.Errorf("got len(l.points)=%v, expected %v", len(l.zMask), len(tc.expected))
 			}
 
-			// Verify vertices
+			// Verify points
 			if !bytes.Equal(l.zMask, tc.expected) {
 				t.Errorf("\n\tgot  %v\n\twant %v", l.zMask, tc.expected)
 			}
