@@ -6,11 +6,12 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
+	"github.com/kyeett/colorschemes"
 	"golang.org/x/image/colornames"
 )
 
 func newLine(nLines, i float64) *line {
-	colorPalete := defaultColorPalette
+	colorPalette := colorschemes.Redblue
 	maxX := 2*i + 1
 	maxY := 2*nLines - (2*i + 1)
 	start := pixel.V(float64(nLines-1-i), i)
@@ -34,7 +35,7 @@ func newLine(nLines, i float64) *line {
 	}
 
 	l := line{
-		color:    colorPalete[int(i)],
+		color:    colorPalette[int(i)%len(colorPalette)],
 		points:   points,
 		zMask:    newZMask(nLines, i),
 		slowness: slownessSlice[int(i)],
@@ -60,7 +61,6 @@ func (l *line) calcLayers() {
 	l.topLayer = tl
 }
 
-// Calculate this on line creation
 func (l *line) indexIsVisible(i int) bool {
 	for c := 0; c < cfg.line.tailLength; c++ {
 		if i == wrapIndex(l.head-c, len(l.points)) {
@@ -221,7 +221,7 @@ type line struct {
 	topLayer    [][]int
 }
 
-var defaultColorPalette = []color.Color{
+var defaultColorPalette = color.Palette{
 	colornames.Darkslateblue,
 	colornames.Darkgoldenrod,
 	colornames.Darkgoldenrod,
@@ -242,4 +242,11 @@ var defaultColorPalette = []color.Color{
 	colornames.Dodgerblue,
 	colornames.Gainsboro,
 	colornames.Honeydew,
+}
+
+func (lines lineSlice) updateColors(p color.Palette) {
+
+	for i, l := range lines {
+		l.color = p[i%len(p)]
+	}
 }

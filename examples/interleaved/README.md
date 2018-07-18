@@ -4,17 +4,20 @@ Inspired by the wonderful [Knot](https://beesandbombs.tumblr.com/image/173330685
 
 ## Todo
 
-* Control palette using keys
-* Fix line borders
 * Key controls
   * S - Vary speed
+  * Change number of lines
 * Restructure code (everything...)
+* Reintroduce default color palette
+* Generate slowness automatically
 
 ### Done
 
 * ~~Vary speed of lines~~
 * ~~Key controls~~
   * ~~V - Toggle rotation~~
+* ~~Fix line borders~~
+* ~~Control palette using keys~~
 
 ## Good settings
 

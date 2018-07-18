@@ -8,19 +8,20 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
-)
-
-const (
-	height    = 400.0
-	width     = 400.0
-	frameTick = 20
-	gridSize  = 40
-	nLines    = 4
+	"github.com/kyeett/colorschemes"
 )
 
 var (
 	backgroundColor = color.Black
-	slownessSlice   = []float64{4, 3, 2, 3, 4, 8}
+	slownessSlice   = []float64{4, 3, 2, 3, 4, 8, 8}
+)
+
+const (
+	height    = 500.0
+	width     = 500.0
+	frameTick = 10
+	gridSize  = 40
+	nLines    = 5
 )
 
 var cfg = Config{
@@ -43,6 +44,10 @@ var cfg = Config{
 }
 
 func run() {
+	if nLines > 7 {
+		panic("Currently max supported lines is 7")
+	}
+
 	lines := newLines(nLines)
 
 	win, err := pixelgl.NewWindow(cfg.window)
@@ -60,6 +65,7 @@ func run() {
 
 	tick := time.Tick(frameTick * time.Millisecond)
 	var imdLines *imdraw.IMDraw
+	paletteIndex := 0
 	for !win.Closed() {
 		imdLines = lines.prepareDraw(linesOffset)
 
@@ -70,6 +76,14 @@ func run() {
 		imdLines.Draw(win)
 
 		//Handle key presses
+		if win.JustPressed(pixelgl.KeyUp) {
+			paletteIndex = (paletteIndex - 1 + len(colorschemes.Palettes)) % len(colorschemes.Palettes)
+			lines.updateColors(colorschemes.Palettes[paletteIndex])
+		}
+		if win.JustPressed(pixelgl.KeyDown) {
+			paletteIndex = (paletteIndex + 1) % len(colorschemes.Palettes)
+			lines.updateColors(colorschemes.Palettes[paletteIndex])
+		}
 		if win.JustPressed(pixelgl.KeyV) {
 			cfg.toggle.rotatedView = !cfg.toggle.rotatedView
 		}
