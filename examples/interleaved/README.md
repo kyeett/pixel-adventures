@@ -5,16 +5,20 @@ Inspired by the wonderful [Knot](https://beesandbombs.tumblr.com/image/173330685
 ## Todo
 
 * Control palette using keys
-* Rotation using key
+* Fix line borders
+* Key controls
+  * S - Vary speed
 * Restructure code (everything...)
 
 ### Done
+
 * ~~Vary speed of lines~~
+* ~~Key controls~~
+  * ~~V - Toggle rotation~~
 
 ## Good settings
 
 ![first](first_example.png)
-
 
 ```golang
 const (

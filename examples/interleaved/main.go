@@ -22,16 +22,16 @@ const (
 	tailLength     = 5 * nLines
 	lineWidth      = 12
 	lineWidthDelay = 0.5 * 8 * nLines
-	tickSize       = 5
+	tickSize       = 1
 	stepSize       = 0.5
 	drawGrid       = false
 	drawLineBorder = false
-	rotateView     = true
 )
 
 var (
 	backgroundColor = color.Black
-	slownessSlice   = []float64{8, 6, 4, 6, 8, 12}
+	slownessSlice   = []float64{4, 3, 2, 3, 4, 8}
+	rotateView      = true
 )
 
 func run() {
@@ -61,6 +61,13 @@ func run() {
 
 		if drawGrid {
 			s.Draw(win, pixel.IM.Moved(centerOffset))
+		}
+
+		if win.JustPressed(pixelgl.KeyV) {
+			rotateView = !rotateView
+		}
+		if win.JustPressed(pixelgl.KeyEscape) {
+			return
 		}
 
 		imd.Draw(win)
