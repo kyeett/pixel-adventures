@@ -3,9 +3,12 @@
 
 Trying to recreate: [bees and bombs - triangle - square](https://beesandbombs.tumblr.com/image/175213215151)
 
-# Steps
+## Todo
 
-1. Draw 4 triangles in middle
-2. Shrink square.
-3. Rotate triangles
-4. Repeat from 2
+* Use Porter-Duff composition on overlapping shapes
+* Document this example in the top repo
+
+### Done
+
+* ~~Draw initial shapes~~
+* ~~Same shape movement as bees and bombs~~

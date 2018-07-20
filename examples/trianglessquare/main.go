@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"math"
+	"time"
 
 	"golang.org/x/image/colornames"
 
@@ -12,9 +13,18 @@ import (
 )
 
 const (
+	maxSteps     = 50
 	height       = 200
 	width        = 200
-	triangleSize = 50
+	sleepTime    = 200
+	triangleSize = height / 4
+)
+
+type state int
+
+const (
+	shrinkSquare = iota + 1
+	spinTriangles
 )
 
 type triangle struct {
@@ -51,71 +61,76 @@ func run() {
 		colornames.Red,
 	}
 
-	var step float64
-	//start := time.Now()
-	for !win.Closed() {
-		step++
-		// in case window got resized, we also need to resize our canvas
-		canvas.SetBounds(win.Bounds())
-		canvas.Clear(pixel.Alpha(0))
+	//Initialize
+	offset := pixel.V(width/2, height/2)
+	midR := pixel.R(0, 0, width, height)
+	midR = midR.Resized(offset, midR.Size().Scaled(0.5*1/math.Sqrt2)) //.Resized(offset, pixel.V(0.5, 0.5))
+	fullR := pixel.R(0, 0, width, height)
 
-		//offset := math.Sin(time.Since(start).Seconds()) * 300
+	backgroundColor := color.RGBA{228, 0, 153, 255}
+	foregroundColor := color.RGBA{237, 237, 237, 255}
+
+	currentState := shrinkSquare
+	var step float64
+	for !win.Closed() {
+		canvas.Clear(pixel.Alpha(0))
 
 		// clear the canvas to be totally transparent and set the xor compose method
 		//canvas.Clear(pixel.Alpha(0))
 		//canvas.SetComposeMethod(pixel.ComposeXor)
 
-		offset := pixel.V(width/2, height/2)
-		/* 		imd.SetMatrix(pixel.IM.Rotated(t.Center(), step/30*math.Pi).Moved(offset)) */
 		imd.Clear()
-		imd.Color = t.color
-		for i := float64(0); i < 4; i++ {
 
-			imd.SetMatrix(pixel.IM.Moved(offset).Rotated(offset, i*math.Pi/2))
-			imd.Push(t.vertices()...)
-			imd.Polygon(0)
+		if currentState == shrinkSquare {
+			if step == maxSteps {
+				step, currentState = 0, spinTriangles
+				time.Sleep(sleepTime * time.Millisecond)
+				continue
+			}
+			//Draw shrinking square
+			imd.Color = foregroundColor
+			imd.SetMatrix(pixel.IM)
+			shrinkR := fullR.Resized(offset, fullR.Size().Scaled(1-smoothSwing(step/maxSteps)*0.5))
+			imd.Push(shrinkR.Min, shrinkR.Max)
+			imd.Rectangle(0)
+
+			//Draw central square
+			imd.Color = backgroundColor
+			imd.SetMatrix(pixel.IM.Rotated(offset, math.Pi/4))
+			imd.Push(midR.Min, midR.Max)
+			imd.Rectangle(0)
+
+		} else {
+			// Spin Triangles
+			if step == maxSteps {
+				step, currentState = 0, shrinkSquare
+				foregroundColor, backgroundColor = backgroundColor, foregroundColor
+				time.Sleep(sleepTime * time.Millisecond)
+				continue
+			}
+			for i := float64(0); i < 4; i++ {
+				imd.Color = foregroundColor
+				imd.SetMatrix(pixel.IM.Rotated(t.Center(), (1-smoothSwing(step/maxSteps))*math.Pi).Moved(offset).Rotated(offset, i*math.Pi/2))
+				imd.Push(t.vertices()...)
+				imd.Polygon(0)
+			}
+
 		}
+
+		imd.Color = foregroundColor
+
 		imd.Draw(canvas)
+		win.Clear(backgroundColor)
 
 		//Draw everything to the screen
-		win.Clear(color.Black)
-		canvas.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
+		canvas.Draw(win, pixel.IM.Moved(offset))
 		win.Update()
-
-		/*
-			// red circle
-			imd.Clear()
-			imd.Color = pixel.RGB(1, 0, 0)
-			imd.Push(win.Bounds().Center().Add(pixel.V(-offset, 0)))
-			imd.Circle(200, 0)
-			imd.Draw(canvas)
-
-			// blue circle
-			imd.Clear()
-			imd.Color = pixel.RGB(0, 0, 1)
-			imd.Push(win.Bounds().Center().Add(pixel.V(offset, 0)))
-			imd.Circle(150, 0)
-			imd.Draw(canvas)
-
-			// yellow circle
-			imd.Clear()
-			imd.Color = pixel.RGB(1, 1, 0)
-			imd.Push(win.Bounds().Center().Add(pixel.V(0, -offset)))
-			imd.Circle(100, 0)
-			imd.Draw(canvas)
-
-			// magenta circle
-			imd.Clear()
-			imd.Color = pixel.RGB(1, 0, 1)
-			imd.Push(win.Bounds().Center().Add(pixel.V(0, offset)))
-			imd.Circle(50, 0)
-			imd.Draw(canvas)
-
-			win.Clear(colornames.Green)
-			canvas.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
-			win.Update()
-		*/
+		step++
 	}
+}
+
+func smoothSwing(x float64) float64 {
+	return math.Pow(0.5-math.Cos(x*math.Pi)/2, 2)
 }
 
 func main() {
