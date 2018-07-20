@@ -14,8 +14,8 @@ import (
 
 const (
 	maxSteps     = 50
-	height       = 200
-	width        = 200
+	height       = 300
+	width        = 300
 	sleepTime    = 200
 	triangleSize = height / 4
 )
@@ -87,6 +87,7 @@ func run() {
 				time.Sleep(sleepTime * time.Millisecond)
 				continue
 			}
+
 			//Draw shrinking square
 			imd.Color = foregroundColor
 			imd.SetMatrix(pixel.IM)
@@ -100,6 +101,8 @@ func run() {
 			imd.Push(midR.Min, midR.Max)
 			imd.Rectangle(0)
 
+			canvas.SetComposeMethod(pixel.ComposeOver)
+
 		} else {
 			// Spin Triangles
 			if step == maxSteps {
@@ -108,6 +111,7 @@ func run() {
 				time.Sleep(sleepTime * time.Millisecond)
 				continue
 			}
+
 			for i := float64(0); i < 4; i++ {
 				imd.Color = foregroundColor
 				imd.SetMatrix(pixel.IM.Rotated(t.Center(), (1-smoothSwing(step/maxSteps))*math.Pi).Moved(offset).Rotated(offset, i*math.Pi/2))
@@ -115,6 +119,7 @@ func run() {
 				imd.Polygon(0)
 			}
 
+			canvas.SetComposeMethod(pixel.ComposeXor)
 		}
 
 		imd.Color = foregroundColor
